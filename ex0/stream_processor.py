@@ -8,7 +8,7 @@
 #  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/11 08:29:09 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/12 10:57:26 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/12 10:59:33 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -100,7 +100,7 @@ class LogProcessor(DataProcessor):
         return f"Output: {result}"
 
 
-def main():
+def main() -> None:
 
     print("=== CODE NEXUS - DATA PROCESSOR FOUNDATION ===")
 
