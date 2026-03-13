@@ -8,7 +8,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/12 11:26:07 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/13 17:50:22 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/13 19:44:26 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -203,48 +203,55 @@ class EventStream(DataStream):
 
 
 def main() -> None:
-
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===")
+    
+    print("Initializing Sensor Stream...")
+    s = SensorStream("SENSOR_001")
+    print("Processing sensor batch: [temp:22.5, humidity:65, pressure:1013]")
+    print(s.process_batch(["temp:22.5", "humidity:65", "pressure:1013"]))
 
-    print("\nInitializing Sensor Stream...")
-    stream_id = "SENSOR_001"
-    capteur = ["temp:22.5", "humidity:65", "pressure:1013"]
-    proc = SensorStream(stream_id)
-    print(f"Processing sensor batch: [{', '.join(capteur)}]")
-    print(proc.process_batch(capteur))
-
-    print("\nInitializing Transaction Stream..")
-    transaction = ["buy:100", "sell:150", "buy:75"]
-    stream_id = "TRANS_001"
-    proc = TransactionStream(stream_id)
-    print(f"Processing transaction batch: {', '.join(transaction)}")
-    print(proc.process_batch(transaction))
+    print("\nInitializing Transaction Stream...")
+    t = TransactionStream("TRANS_001")
+    print("Processing transaction batch: [buy:100, sell:150, buy:75]")
+    print(t.process_batch(["buy:100", "sell:150", "buy:75"]))
 
     print("\nInitializing Event Stream...")
-    stream_id = "EVENT_001"
-    event = ["login", "error", "logout"]
-    proc = EventStream(stream_id)
-    print(f"Processing event batch: {', '.join(event)}")
-    print(proc.process_batch(event))
+    e = EventStream("EVENT_001")
+    print("Processing event batch: [login, error, logout]")
+    print(e.process_batch(["login", "error", "logout"]))
 
     print("\n=== Polymorphic Stream Processing ===")
     print("Processing mixed stream types through unified interface...")
 
-    streams: List[DataStream] = [
-                                SensorStream("SENSOR_001"),
-                                TransactionStream("TRANS_001"),
-                                EventStream("EVENT_001")
-                                ]
+    streams: List[DataStream] = [s, t, e]
 
-    data_payloads = [
-                    ["temp:22.5", "humidity:65", "pressure:1050"],
-                    ["buy:100", "sell:200", "buy:75"],
-                    ["login", "errorr", "logout", "errror"]
+    payloads = [
+        ["temp:22.5", "temp:25.0"],
+        ["buy:50", "sell:20", "buy:10", "buy:5"],
+        ["login", "error", "logout"]
     ]
 
-    for _, stream in enumerate(streams):
-        rst = (stream.filter_data(data_payloads))
-        print(rst)
+    print("\nBatch 1 Results:")
+    for i, stream in enumerate(streams):
+        stream.process_batch(payloads[i])
+
+        if "Environmental" in stream.type:
+            name, unit, count = "Sensor", "readings", stream.len_tab
+        elif "Financial" in stream.type:
+            name, unit, count = "Transaction", "operations", stream.nb_transaction
+        else:
+            name, unit, count = "Event", "events", stream.len_tab
+
+        print(f"- {name} data: {count} {unit} processed")
+
+    print("Stream filtering active: High-priority data only")
+
+    f_sensor = s.filter_data(["temp:110", "temp:120"], "100")
+    f_trans = t.filter_data(["buy:1000"], "500")
+    
+    print(f"Filtered results: {len(f_sensor)} critical sensor alerts, "
+          f"{len(f_trans)} large transaction")
+
     print("\nAll streams processed successfully. Nexus throughput optimal.")
 
 
