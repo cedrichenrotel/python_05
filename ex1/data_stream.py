@@ -8,7 +8,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/12 11:26:07 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/13 19:44:26 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/14 15:57:01 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -48,14 +48,14 @@ class SensorStream(DataStream):
 
         self.len_tab = len(data_batch)
 
-        for i in data_batch:
-            try:
+        try:
+            for i in data_batch:
                 if isinstance(i, str) and ':' in i:
                     data = i.split(':')
-                    if data[0] == 'temp':
-                        self.temp = float(data[1])
-            except ValueError as e:
-                print(f"Error process_batch : {e}")
+                if data[0] == 'temp':
+                    self.temp = float(data[1])
+        except ValueError as e:
+            print(f"Error process_batch : {e}")
 
         return (f"Sensor analysis: {self.len_tab} readings "
                 f"processed, avg temp: {self.temp}°C")
@@ -65,16 +65,16 @@ class SensorStream(DataStream):
         error = []
         limittemperature = float(criteria) if criteria else 100.0
 
-        for i in data_batch:
-            try:
+        try:
+            for i in data_batch:
                 if isinstance(i, str) and ':' in i:
                     data = i.split(':')
                     if (data[0] == 'temp' and float(data[1]) >=
                             limittemperature):
                         error.append(i)
                         self.lst_err.append(i)
-            except ValueError as e:
-                print(f"Error filter_data: {e}")
+        except ValueError as e:
+            print(f"Error filter_data: {e}")
         return error
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
@@ -93,8 +93,6 @@ class TransactionStream(DataStream):
         self.type = "Financial Data"
         self.nb_sell = 0
         self.lst_err: list[Any] = []
-        self.nb_transaction = 0
-        self.sum_total = 0
 
         print(f"Stream ID: {stream_id}, Type: {self.type}")
 
@@ -102,8 +100,8 @@ class TransactionStream(DataStream):
 
         total = 0
 
-        for i in data_batch:
-            try:
+        try:
+            for i in data_batch:
                 if isinstance(i, str) and ':' in i:
                     data = i.split(':')
                     if data[0] == "buy":
@@ -111,8 +109,8 @@ class TransactionStream(DataStream):
                     elif data[0] == "sell":
                         total -= int(data[1])
                         self.nb_sell += 1
-            except ValueError as e:
-                print(f"Error process_batch: {e}")
+        except ValueError as e:
+            print(f"Error process_batch: {e}")
 
         if total > 0:
             sign = '+'
@@ -126,33 +124,22 @@ class TransactionStream(DataStream):
                     = None) -> List[Any]:
 
         error = []
-        total = 0
-        accountneg = int(criteria) if criteria else 0
+        accountneg = int(criteria) if criteria else 500
 
         for i in data_batch:
             try:
                 if isinstance(i, str) and ':' in i:
                     data = i.split(':')
-                    if data[0] == "buy":
-                        total += int(data[1])
-                    elif data[0] == "sell":
-                        total -= int(data[1])
-                        self.nb_sell += 1
             except ValueError as e:
                 print(f"Error filter_data: {e}")
-        if total <= accountneg:
-            error.append(total)
-            self.lst_err.append(f"Flow Alert: {total}")
-        self.nb_transaction = len(data_batch)
-        self.sum_total = total
+            if data[0] == "buy" and int(data[1]) >= accountneg:
+                error.append(i)
+                self.lst_err.append(f"Flow Alert: {i}")
         return error
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
         return {
                 "type": self.type,
-                "number sell": self.nb_sell,
-                "number transaction": self.nb_transaction,
-                "total sum": self.sum_total,
                 "number error": len(self.lst_err)
                 }
 
@@ -172,12 +159,12 @@ class EventStream(DataStream):
         total_err = 0
         self.len_tab = len(data_batch)
 
-        for i in data_batch:
-            try:
+        try:
+            for i in data_batch:
                 if i == 'error':
                     total_err += 1
-            except TypeError as e:
-                print(f"Error process_batch: {e}")
+        except TypeError as e:
+            print(f"Error process_batch: {e}")
 
         return (f"Event analysis: {self.len_tab} events, {total_err} error "
                 "detected")
@@ -204,26 +191,26 @@ class EventStream(DataStream):
 
 def main() -> None:
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===")
-    
+
     print("Initializing Sensor Stream...")
-    s = SensorStream("SENSOR_001")
+    sensor = SensorStream("SENSOR_001")
     print("Processing sensor batch: [temp:22.5, humidity:65, pressure:1013]")
-    print(s.process_batch(["temp:22.5", "humidity:65", "pressure:1013"]))
+    print(sensor.process_batch(["temp:22.5", "humidity:65", "pressure:1013"]))
 
     print("\nInitializing Transaction Stream...")
-    t = TransactionStream("TRANS_001")
+    transaction = TransactionStream("TRANS_001")
     print("Processing transaction batch: [buy:100, sell:150, buy:75]")
-    print(t.process_batch(["buy:100", "sell:150", "buy:75"]))
+    print(transaction.process_batch(["buy:100", "sell:150", "buy:75"]))
 
     print("\nInitializing Event Stream...")
-    e = EventStream("EVENT_001")
+    event = EventStream("EVENT_001")
     print("Processing event batch: [login, error, logout]")
-    print(e.process_batch(["login", "error", "logout"]))
+    print(event.process_batch(["login", "error", "logout"]))
 
     print("\n=== Polymorphic Stream Processing ===")
     print("Processing mixed stream types through unified interface...")
 
-    streams: List[DataStream] = [s, t, e]
+    streams: List[DataStream] = [sensor, transaction, event]
 
     payloads = [
         ["temp:22.5", "temp:25.0"],
@@ -234,23 +221,19 @@ def main() -> None:
     print("\nBatch 1 Results:")
     for i, stream in enumerate(streams):
         stream.process_batch(payloads[i])
-
-        if "Environmental" in stream.type:
-            name, unit, count = "Sensor", "readings", stream.len_tab
-        elif "Financial" in stream.type:
-            name, unit, count = "Transaction", "operations", stream.nb_transaction
-        else:
-            name, unit, count = "Event", "events", stream.len_tab
-
+        if isinstance(stream, SensorStream):
+            name, unit, count = "Sensor", "readings", len(payloads[i])
+        elif isinstance(stream, TransactionStream):
+            name, unit, count = "Transaction", "operations", len(payloads[i])
+        elif isinstance(stream, EventStream):
+            name, unit, count = "Event", "events", len(payloads[i])
         print(f"- {name} data: {count} {unit} processed")
 
-    print("Stream filtering active: High-priority data only")
-
-    f_sensor = s.filter_data(["temp:110", "temp:120"], "100")
-    f_trans = t.filter_data(["buy:1000"], "500")
-    
-    print(f"Filtered results: {len(f_sensor)} critical sensor alerts, "
-          f"{len(f_trans)} large transaction")
+    print("\nStream filtering active: High-priority data only")
+    false_sensor = sensor.filter_data(["temp:110", "temp:120"], "100")
+    false_trans = transaction.filter_data(["buy:1000"], "500")
+    print(f"Filtered results: {len(false_sensor)} critical sensor alerts, "
+          f"{len(false_trans)} large transaction")
 
     print("\nAll streams processed successfully. Nexus throughput optimal.")
 
