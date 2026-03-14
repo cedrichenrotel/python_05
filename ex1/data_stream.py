@@ -8,7 +8,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/12 11:26:07 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/14 15:57:01 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/14 16:18:00 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -189,6 +189,29 @@ class EventStream(DataStream):
                 }
 
 
+class StreamProcessor:
+
+    def __init__(self) -> None:
+        self.streams: List[DataStream] = []
+
+    def add_stream(self, stream: DataStream) -> None:
+        self.streams.append(stream)
+
+    def process_all(self, all_payloads: List[List[Any]]) -> None:
+
+        print("\nBatch 1 Results:")
+        for i, stream in enumerate(self.streams):
+            stream.process_batch(all_payloads[i])
+            if isinstance(stream, SensorStream):
+                name, unit, count = "Sensor", "readings", len(all_payloads[i])
+            elif isinstance(stream, TransactionStream):
+                name, unit, count = "Transaction", "operations",
+                len(all_payloads[i])
+            elif isinstance(stream, EventStream):
+                name, unit, count = "Event", "events", len(all_payloads[i])
+            print(f"- {name} data: {count} {unit} processed")
+
+
 def main() -> None:
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===")
 
@@ -210,7 +233,10 @@ def main() -> None:
     print("\n=== Polymorphic Stream Processing ===")
     print("Processing mixed stream types through unified interface...")
 
-    streams: List[DataStream] = [sensor, transaction, event]
+    processor = StreamProcessor()
+    processor.add_stream(sensor)
+    processor.add_stream(transaction)
+    processor.add_stream(event)
 
     payloads = [
         ["temp:22.5", "temp:25.0"],
@@ -218,16 +244,7 @@ def main() -> None:
         ["login", "error", "logout"]
     ]
 
-    print("\nBatch 1 Results:")
-    for i, stream in enumerate(streams):
-        stream.process_batch(payloads[i])
-        if isinstance(stream, SensorStream):
-            name, unit, count = "Sensor", "readings", len(payloads[i])
-        elif isinstance(stream, TransactionStream):
-            name, unit, count = "Transaction", "operations", len(payloads[i])
-        elif isinstance(stream, EventStream):
-            name, unit, count = "Event", "events", len(payloads[i])
-        print(f"- {name} data: {count} {unit} processed")
+    StreamProcessor.process_all(payloads)
 
     print("\nStream filtering active: High-priority data only")
     false_sensor = sensor.filter_data(["temp:110", "temp:120"], "100")
