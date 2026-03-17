@@ -8,7 +8,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/16 07:33:05 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/17 10:24:37 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/17 17:37:17 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -27,6 +27,9 @@ class ProcessingPipeline(ABC):
     def __init__(self, pipeline_id: str) -> None:
         self.pipeline_id = pipeline_id
         self.stages: List[ProcessingStage] = []
+        self.add_stage(InputStage())
+        self.add_stage(TransformStage())
+        self.add_stage(OutputStage())
 
     def add_stage(self, stage: ProcessingStage) -> None:
         self.stages.append(stage)
@@ -42,42 +45,35 @@ class ProcessingPipeline(ABC):
 
 
 class InputStage():
-
     def process(self, data: Any) -> Any:
-        try:
+        if isinstance(data, str):
             rst = str(data.strip())
             return rst
-        except TypeError as e:
-            print(f"[KO] InputStage {e}")
-            return data
+        else:
+            raise TypeError("[KO] InputStage")
 
 
 class TransformStage():
     def process(self, data: Any) -> Any:
-        try:
-            rst = data.upper()
+        if isinstance(data, str):
+            rst = str(data.strip())
             return rst
-        except TypeError as e:
-            print(f"TransformStage {e}")
-            return
+        else:
+            raise TypeError("[KO] TransformStage")
 
 
 class OutputStage():
     def process(self, data: Any) -> Any:
-        try:
+        if isinstance(data, str):
             rst = "[Output] -> " + data
             return rst
-        except TypeError as e:
-            print(f"OutputStage {e}")
-            return
+        else:
+            raise TypeError("[KO] OutputStage")
 
 
 class JSONAdapter(ProcessingPipeline):
     def __init__(self, pipeline_id: str) -> None:
         super().__init__(pipeline_id)
-        self.add_stage(InputStage())
-        self.add_stage(TransformStage())
-        self.add_stage(OutputStage())
 
     def process(self, data: str) -> Any:
         try:
@@ -86,14 +82,12 @@ class JSONAdapter(ProcessingPipeline):
             return self.run_pipeline(rst)
         except (json.JSONDecodeError, TypeError, KeyError) as e:
             print(f"[KO] JSONAdapter: {e}")
+            return data
 
 
 class CSVAdapter(ProcessingPipeline):
     def __init__(self, pipeline_id: str) -> None:
         super().__init__(pipeline_id)
-        self.add_stage(InputStage())
-        self.add_stage(TransformStage())
-        self.add_stage(OutputStage())
 
     def process(self, data: str) -> Any:
         try:
@@ -104,22 +98,20 @@ class CSVAdapter(ProcessingPipeline):
             return result
         except AttributeError as e:
             print(f"[KO] CSVAdapter: {e}")
+            return data
 
 
 class StreamAdapter(ProcessingPipeline):
     def __init__(self, pipeline_id: str) -> None:
         super().__init__(pipeline_id)
-        self.add_stage(InputStage())
-        self.add_stage(TransformStage())
-        self.add_stage(OutputStage())
 
     def process(self, data: str) -> Any:
         try:
-            if data is None:
-                raise AttributeError("data is None")
-            return self.run_pipeline(str(data))
+            if data is not None:
+                return self.run_pipeline(str(data))
         except AttributeError as e:
-            print(f"[KO] StreamAdapter: {e}")
+            print(f"[KO] StreamAdapter failure: {e}")
+        return data
 
 
 class NexusManager:
