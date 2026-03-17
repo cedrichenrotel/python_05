@@ -5,10 +5,10 @@
 #                                                      :::      ::::::::    #
 #  stream_processor.py                               :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: cehenrot <cehenrot@student.42.fr>         +#+  +:+       +#+         #
+#  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/11 08:29:09 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/12 10:59:33 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/17 14:03:32 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -46,7 +46,7 @@ class NumericProcessor(DataProcessor):
         sumt = sum(data)
         avg = sumt / len(data)
         rst = (f"Processed {len(data)} numeric values, sum={sumt}"
-               f", avg={avg:.2f}")
+               f", avg={avg:.1f}")
         return self.format_output(rst)
 
     def format_output(self, result: str) -> str:
@@ -122,7 +122,7 @@ def main() -> None:
     proc = TextProcessor()
     try:
         if proc.validate(s):
-            print(f"Processing data: {s}")
+            print(f'Processing data: "{s}"')
             print("Validation: Text data verified")
             print(proc.process(s))
     except AttributeError as e:
@@ -154,6 +154,8 @@ def main() -> None:
                 print(f"Result {i+1}: {result}")
     except (TypeError, AttributeError) as e:
         print(f"{e} Polyprocess")
+
+    print("\nFoundation systems online. Nexus ready for advanced streams.")
 
 
 if __name__ == "__main__":

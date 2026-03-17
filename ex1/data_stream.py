@@ -8,7 +8,7 @@
 #  By: cehenrot <cehenrot@student.42lyon.fr>     +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/03/12 11:26:07 by cehenrot        #+#    #+#               #
-#  Updated: 2026/03/14 16:18:00 by cehenrot        ###   ########.fr        #
+#  Updated: 2026/03/17 14:23:15 by cehenrot        ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -27,10 +27,10 @@ class DataStream(ABC):
 
     def filter_data(self, data_batch: List[Any], criteria: Optional[str]
                     = None) -> List[Any]:
-        pass
+        return data_batch
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
-        pass
+        return {"stream_id": self.stream_id}
 
 
 class SensorStream(DataStream):
@@ -205,8 +205,8 @@ class StreamProcessor:
             if isinstance(stream, SensorStream):
                 name, unit, count = "Sensor", "readings", len(all_payloads[i])
             elif isinstance(stream, TransactionStream):
-                name, unit, count = "Transaction", "operations",
-                len(all_payloads[i])
+                name, unit, count = ("Transaction", "operations",
+                                     len(all_payloads[i]))
             elif isinstance(stream, EventStream):
                 name, unit, count = "Event", "events", len(all_payloads[i])
             print(f"- {name} data: {count} {unit} processed")
@@ -215,7 +215,7 @@ class StreamProcessor:
 def main() -> None:
     print("=== CODE NEXUS - POLYMORPHIC STREAM SYSTEM ===")
 
-    print("Initializing Sensor Stream...")
+    print("\nInitializing Sensor Stream...")
     sensor = SensorStream("SENSOR_001")
     print("Processing sensor batch: [temp:22.5, humidity:65, pressure:1013]")
     print(sensor.process_batch(["temp:22.5", "humidity:65", "pressure:1013"]))
@@ -234,6 +234,7 @@ def main() -> None:
     print("Processing mixed stream types through unified interface...")
 
     processor = StreamProcessor()
+
     processor.add_stream(sensor)
     processor.add_stream(transaction)
     processor.add_stream(event)
@@ -244,7 +245,7 @@ def main() -> None:
         ["login", "error", "logout"]
     ]
 
-    StreamProcessor.process_all(payloads)
+    processor.process_all(payloads)
 
     print("\nStream filtering active: High-priority data only")
     false_sensor = sensor.filter_data(["temp:110", "temp:120"], "100")
